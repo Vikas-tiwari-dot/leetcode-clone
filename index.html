@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CodeBench // C++ Judge</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0a0d12;
+    --panel: #10141b;
+    --panel-2: #141922;
+    --border: #212833;
+    --border-soft: #1a1f28;
+    --text: #e6e9ef;
+    --text-dim: #8892a0;
+    --text-faint: #545d6b;
+    --accent: #7c9eff;
+    --accent-dim: #5a76c9;
+    --green: #3ddc84;
+    --green-dim: #1f6b45;
+    --red: #ff6b6b;
+    --red-dim: #6b2b2b;
+    --amber: #ffb454;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+    --sans: 'Inter', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);}
+  ::selection{background:#7c9eff44;}
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:#2a3140;border-radius:6px;}
+  ::-webkit-scrollbar-thumb:hover{background:#3a4356;}
+
+  #app{display:flex;flex-direction:column;height:100vh;}
+
+  /* ---------- Header ---------- */
+  header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 20px;height:52px;min-height:52px;
+    background:var(--panel);border-bottom:1px solid var(--border);
+    z-index:20;
+  }
+  .brand{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-weight:700;letter-spacing:0.5px;}
+  .brand .dot{width:9px;height:9px;border-radius:2px;background:var(--accent);box-shadow:0 0 12px #7c9eff88;transform:rotate(45deg);}
+  .brand span.sub{color:var(--text-faint);font-weight:500;font-size:12px;margin-left:2px;}
+  .header-stats{display:flex;gap:18px;align-items:center;font-family:var(--mono);font-size:12px;color:var(--text-dim);}
+  .header-stats .stat b{color:var(--text);}
+  .header-stats .sep{width:1px;height:16px;background:var(--border);}
+  .progress-pill{
+    display:flex;align-items:center;gap:8px;padding:5px 12px;border:1px solid var(--border);border-radius:20px;
+    font-family:var(--mono);font-size:12px;
+  }
+  .progress-track{width:70px;height:5px;background:#1c222c;border-radius:3px;overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--green),#5eeaa5);border-radius:3px;transition:width .4s ease;}
+
+  /* ---------- Layout ---------- */
+  #body{flex:1;display:flex;min-height:0;}
+
+  /* ---------- Sidebar ---------- */
+  #sidebar{
+    width:290px;min-width:290px;background:var(--panel);border-right:1px solid var(--border);
+    display:flex;flex-direction:column;overflow:hidden;
+  }
+  .sidebar-head{padding:14px 16px 10px;border-bottom:1px solid var(--border-soft);}
+  .sidebar-head h2{margin:0 0 2px;font-size:13px;font-family:var(--mono);text-transform:uppercase;letter-spacing:1.2px;color:var(--text-dim);}
+  .sidebar-head .count{font-size:11px;color:var(--text-faint);}
+  #problem-list{flex:1;overflow-y:auto;padding:6px 8px;}
+  .prob-item{
+    display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:8px;cursor:pointer;
+    border:1px solid transparent;margin-bottom:3px;transition:background .12s, border-color .12s;
+  }
+  .prob-item:hover{background:var(--panel-2);}
+  .prob-item.active{background:#161c2680;border-color:#2b3550;}
+  .prob-status{width:16px;height:16px;flex:none;display:flex;align-items:center;justify-content:center;}
+  .prob-status svg{width:14px;height:14px;}
+  .prob-num{font-family:var(--mono);font-size:11px;color:var(--text-faint);width:20px;flex:none;}
+  .prob-title{flex:1;font-size:13.5px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .prob-diff{font-family:var(--mono);font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:4px;flex:none;}
+  .diff-Easy{color:var(--green);background:#3ddc8418;}
+  .diff-Medium{color:var(--amber);background:#ffb45418;}
+  .diff-Hard{color:var(--red);background:#ff6b6b18;}
+
+  /* ---------- Main ---------- */
+  #main{flex:1;display:flex;min-width:0;}
+  #desc-panel{
+    width:44%;min-width:340px;max-width:640px;border-right:1px solid var(--border);
+    display:flex;flex-direction:column;overflow:hidden;background:var(--bg);
+  }
+  .desc-tabs{display:flex;border-bottom:1px solid var(--border-soft);background:var(--panel);padding:0 6px;}
+  .desc-tab{padding:12px 16px;font-size:12.5px;font-family:var(--mono);color:var(--text-faint);cursor:pointer;border-bottom:2px solid transparent;}
+  .desc-tab.active{color:var(--text);border-bottom-color:var(--accent);}
+  .desc-body{flex:1;overflow-y:auto;padding:22px 26px 60px;}
+  .desc-body h1{font-size:19px;margin:0 0 12px;font-family:var(--sans);font-weight:700;}
+  .desc-meta{display:flex;gap:8px;align-items:center;margin-bottom:18px;}
+  .desc-body h3{font-size:12.5px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-dim);margin:22px 0 8px;font-family:var(--mono);}
+  .desc-body p{line-height:1.65;font-size:14px;color:#ccd2dc;margin:0 0 10px;}
+  .example-block{
+    background:var(--panel);border:1px solid var(--border-soft);border-radius:8px;padding:12px 14px;margin-bottom:10px;
+    font-family:var(--mono);font-size:12.5px;line-height:1.7;
+  }
+  .example-block b{color:var(--text-dim);font-weight:600;}
+  .example-block .val{color:var(--accent);}
+  .constraints{font-family:var(--mono);font-size:12.5px;color:var(--text-dim);line-height:2;padding-left:2px;}
+  .constraints li{margin-left:16px;}
+  .note-box{
+    margin-top:22px;border:1px dashed #2b3346;border-radius:8px;padding:12px 14px;
+    font-size:12px;color:var(--text-faint);line-height:1.6;
+  }
+  .note-box b{color:var(--text-dim);}
+  code.inline{background:#1a2029;border-radius:4px;padding:1px 6px;font-family:var(--mono);font-size:12px;color:#c7ceda;}
+
+  /* ---------- Editor side ---------- */
+  #editor-side{flex:1;display:flex;flex-direction:column;min-width:0;}
+  .editor-toolbar{
+    display:flex;align-items:center;justify-content:space-between;padding:9px 16px;
+    background:var(--panel);border-bottom:1px solid var(--border-soft);
+  }
+  .editor-toolbar .lang-badge{
+    font-family:var(--mono);font-size:11.5px;color:#a9b6ff;background:#7c9eff14;border:1px solid #7c9eff33;
+    padding:3px 10px;border-radius:6px;
+  }
+  .toolbar-actions{display:flex;gap:8px;align-items:center;}
+  button.btn{
+    font-family:var(--mono);font-size:12.5px;font-weight:600;border-radius:7px;padding:8px 16px;
+    cursor:pointer;border:1px solid var(--border);background:var(--panel-2);color:var(--text);
+    display:flex;align-items:center;gap:7px;transition:transform .08s, border-color .12s, background .12s;
+  }
+  button.btn:hover{border-color:#3a4356;background:#181f2b;}
+  button.btn:active{transform:scale(0.97);}
+  button.btn.reset{color:var(--text-faint);}
+  button.btn.run{color:#d7e0ff;}
+  button.btn.submit{
+    background:linear-gradient(180deg,#39c977,#2aa863);border:1px solid #2aa863;color:#062412;font-weight:700;
+  }
+  button.btn.submit:hover{filter:brightness(1.08);}
+  button.btn:disabled{opacity:0.5;cursor:default;transform:none;}
+
+  #editor-wrap{flex:1;display:flex;flex-direction:column;min-height:0;position:relative;}
+  #code-area{
+    flex:1;width:100%;resize:none;border:none;outline:none;background:#0c0f14;color:#dbe1eb;
+    font-family:var(--mono);font-size:13.5px;line-height:1.65;padding:16px 18px;tab-size:4;
+  }
+
+  /* ---------- Console / results ---------- */
+  #console{
+    height:230px;min-height:44px;border-top:1px solid var(--border);background:var(--panel);
+    display:flex;flex-direction:column;transition:height .18s ease;
+  }
+  #console.collapsed{height:40px;}
+  .console-head{
+    display:flex;align-items:center;justify-content:space-between;padding:0 14px;height:40px;min-height:40px;
+    cursor:pointer;border-bottom:1px solid var(--border-soft);
+  }
+  .console-head .left{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12px;color:var(--text-dim);}
+  .console-head .caret{font-size:11px;color:var(--text-faint);transition:transform .15s;}
+  #console.collapsed .caret{transform:rotate(-90deg);}
+  .verdict-chip{
+    font-family:var(--mono);font-weight:700;font-size:12px;padding:3px 10px;border-radius:5px;display:none;
+  }
+  .verdict-chip.show{display:inline-block;}
+  .verdict-AC{color:var(--green);background:#3ddc8422;border:1px solid #3ddc8455;}
+  .verdict-WA{color:var(--red);background:#ff6b6b22;border:1px solid #ff6b6b55;}
+  .verdict-RE{color:var(--amber);background:#ffb45422;border:1px solid #ffb45455;}
+  #console-body{flex:1;overflow-y:auto;padding:12px 14px;font-family:var(--mono);font-size:12.5px;}
+  .console-empty{color:var(--text-faint);padding:6px 2px;}
+  .test-line{
+    display:flex;align-items:flex-start;gap:10px;padding:7px 8px;border-radius:6px;margin-bottom:3px;
+  }
+  .test-line.pass{background:#3ddc840c;}
+  .test-line.fail{background:#ff6b6b0c;}
+  .test-line .icon{flex:none;width:15px;height:15px;margin-top:1px;}
+  .test-line .tbody{flex:1;min-width:0;}
+  .test-line .tlabel{color:var(--text-dim);}
+  .test-line .tdetail{color:var(--text-faint);margin-top:3px;font-size:11.5px;line-height:1.6;}
+  .test-line .tdetail .k{color:#7d879a;}
+  .test-line .tdetail .v{color:#c4cbd6;}
+  .console-summary{
+    font-family:var(--mono);font-size:12.5px;padding:10px 8px 4px;color:var(--text-dim);border-top:1px dashed var(--border-soft);margin-top:6px;
+  }
+  .err-box{color:var(--red);white-space:pre-wrap;padding:8px;background:#ff6b6b10;border-radius:6px;}
+
+  /* misc */
+  .hint{font-size:11px;color:var(--text-faint);font-family:var(--mono);}
+  a.reset-note{color:var(--accent);cursor:pointer;text-decoration:underline;}
+  @media (max-width: 900px){
+    #sidebar{position:absolute;left:0;top:52px;bottom:0;z-index:30;transform:translateX(-100%);transition:transform .2s;}
+    #sidebar.open{transform:translateX(0);box-shadow:20px 0 40px #000a;}
+    #desc-panel{display:none;}
+    #desc-panel.mobile-visible{display:flex;width:100%;max-width:none;position:absolute;inset:52px 0 0 0;z-index:25;background:var(--bg);}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand">
+      <div class="dot"></div>CodeBench <span class="sub">// c++ judge</span>
+    </div>
+    <div class="header-stats">
+      <div class="progress-pill">
+        <span id="solved-count">0 / 0</span>
+        <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+      </div>
+    </div>
+  </header>
+
+  <div id="body">
+    <div id="sidebar">
+      <div class="sidebar-head">
+        <h2>Problem Set</h2>
+        <div class="count" id="sidebar-count">18 problems</div>
+      </div>
+      <div id="problem-list"></div>
+    </div>
+
+    <div id="main">
+      <div id="desc-panel">
+        <div class="desc-tabs">
+          <div class="desc-tab active" data-tab="desc">Description</div>
+        </div>
+        <div class="desc-body" id="desc-body"></div>
+      </div>
+
+      <div id="editor-side">
+        <div class="editor-toolbar">
+          <div class="lang-badge">C++17</div>
+          <div class="toolbar-actions">
+            <span class="hint" id="save-hint"></span>
+            <button class="btn reset" id="btn-reset">↺ Reset</button>
+            <button class="btn run" id="btn-run">▶ Run</button>
+            <button class="btn submit" id="btn-submit">⏎ Submit</button>
+          </div>
+        </div>
+        <div id="editor-wrap">
+          <textarea id="code-area" spellcheck="false"></textarea>
+        </div>
+        <div id="console">
+          <div class="console-head" id="console-toggle">
+            <div class="left">
+              <span class="caret">▾</span>
+              <span>Judge Console</span>
+              <span class="verdict-chip" id="verdict-chip"></span>
+            </div>
+            <span class="hint">Run to test samples · Submit to grade all hidden cases</span>
+          </div>
+          <div id="console-body"><div class="console-empty">// output will appear here after you Run or Submit</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================================
+   PART 1 — Simplified C++ → JS transpiler (supports a common LeetCode-style
+   C++ subset: int/double/bool/char/string/vector<T> including nested,
+   loops, if/else, recursion, and common STL calls). No map/set/pair/struct.
+   ========================================================================= */
+function splitTopLevel(str, sep) {
+  const parts = []; let depth = 0, cur = '';
+  for (let i = 0; i < str.length; i++) {
+    const c = str[i];
+    if (c === '<' || c === '(' || c === '[') depth++;
+    if (c === '>' || c === ')' || c === ']') depth--;
+    if (c === sep && depth === 0) { parts.push(cur); cur = ''; }
+    else cur += c;
+  }
+  if (cur.trim() !== '') parts.push(cur);
+  return parts;
+}
+function paramNamesOf(paramsStr) {
+  if (!paramsStr.trim()) return [];
+  return splitTopLevel(paramsStr, ',').map(p => {
+    p = p.trim().replace(/&/g, ' ').replace(/\*/g, ' ');
+    const toks = p.split(/\s+/).filter(Boolean);
+    return toks[toks.length - 1];
+  });
+}
+function skipLiteral(code, i) {
+  const quote = code[i];
+  if (quote !== '"' && quote !== "'") return i;
+  let j = i + 1;
+  while (j < code.length) {
+    if (code[j] === '\\') { j += 2; continue; }
+    if (code[j] === quote) return j + 1;
+    j++;
+  }
+  return j;
+}
+function stripComments(code) {
+  let out = '';
+  for (let i = 0; i < code.length; i++) {
+    if (code[i] === '"' || code[i] === "'") {
+      const end = skipLiteral(code, i); out += code.slice(i, end); i = end - 1; continue;
+    }
+    if (code[i] === '/' && code[i + 1] === '/') {
+      while (i < code.length && code[i] !== '\n') i++;
+      out += '\n'; continue;
+    }
+    if (code[i] === '/' && code[i + 1] === '*') {
+      i += 2;
+      while (i < code.length && !(code[i] === '*' && code[i + 1] === '/')) i++;
+      i += 1; continue;
+    }
+    out += code[i];
+  }
+  return out;
+}
+function extractFunctionBody(code, funcName) {
+  code = stripComments(code);
+  const re = new RegExp('\\b' + funcName + '\\s*\\(');
+  const m = re.exec(code);
+  if (!m) throw new Error('Could not find a function named "' + funcName + '". Keep the method signature exactly as given in the starter code.');
+  const idx = m.index;
+  const parenStart = code.indexOf('(', idx);
+  let depth = 1, j = parenStart + 1;
+  while (depth > 0) {
+    if (code[j] === '"' || code[j] === "'") { j = skipLiteral(code, j); continue; }
+    if (code[j] === '(') depth++; else if (code[j] === ')') depth--;
+    j++;
+    if (j > code.length) throw new Error('Unbalanced parentheses in function signature.');
+  }
+  const paramsStr = code.slice(parenStart + 1, j - 1);
+  let k = j;
+  while (code[k] !== '{') { if (k > code.length) throw new Error('Could not find the function body ({ ... }).'); k++; }
+  let bd = 1, mIdx = k + 1;
+  while (bd > 0) {
+    if (code[mIdx] === '"' || code[mIdx] === "'") { mIdx = skipLiteral(code, mIdx); continue; }
+    if (code[mIdx] === '{') bd++; else if (code[mIdx] === '}') bd--;
+    mIdx++;
+    if (mIdx > code.length) throw new Error('Unbalanced braces { } in your solution.');
+  }
+  const body = code.slice(k + 1, mIdx - 1);
+  return { paramsStr, body };
+}
+function bracesToArrayLiterals(str) {
+  let out = '';
+  for (let i = 0; i < str.length; i++) {
+    if (str[i] === '"' || str[i] === "'") {
+      const end = skipLiteral(str, i); out += str.slice(i, end); i = end - 1; continue;
+    }
+    let isTrigger = false, triggerLen = 0;
+    if (str[i] === '=') { isTrigger = true; triggerLen = 1; }
+    else if (str.slice(i, i + 6) === 'return' && /[\s{]/.test(str[i + 6] || '')) { isTrigger = true; triggerLen = 6; }
+    if (isTrigger) {
+      let j = i + triggerLen;
+      while (str[j] === ' ' || str[j] === '\n' || str[j] === '\t') j++;
+      if (str[j] === '{') {
+        out += str.slice(i, i + triggerLen) + ' ';
+        let depth = 0, k = j, seg = '';
+        do {
+          if (str[k] === '{') { seg += '['; depth++; }
+          else if (str[k] === '}') { seg += ']'; depth--; }
+          else seg += str[k];
+          k++;
+        } while (depth > 0 && k <= str.length);
+        out += seg; i = k - 1; continue;
+      }
+    }
+    out += str[i];
+  }
+  return out;
+}
+function stripVectorTypes(str) {
+  let out = '';
+  for (let i = 0; i < str.length; i++) {
+    if (str[i] === '"' || str[i] === "'") {
+      const end = skipLiteral(str, i); out += str.slice(i, end); i = end - 1; continue;
+    }
+    if (str.slice(i, i + 6) === 'vector' && /[\s<]/.test(str[i + 6] || '')) {
+      let j = i + 6;
+      while (str[j] === ' ') j++;
+      if (str[j] === '<') {
+        let depth = 1, k = j + 1, innerStart = j + 1;
+        while (depth > 0 && k <= str.length) {
+          if (str[k] === '<') depth++; else if (str[k] === '>') depth--;
+          k++;
+        }
+        const innerType = str.slice(innerStart, k - 1);
+        let m = k;
+        while (str[m] === ' ') m++;
+        if (str[m] === '&') { m++; while (str[m] === ' ') m++; }
+        let idStart = m;
+        while (/[A-Za-z0-9_]/.test(str[m] || '')) m++;
+        const idName = str.slice(idStart, m);
+        let n = m;
+        while (str[n] === ' ') n++;
+        const defaultVal = innerType.trim().startsWith('vector') ? '[]' : (innerType.trim() === 'string' ? '""' : '0');
+        if (str[n] === '(') {
+          let pd = 1, p = n + 1;
+          while (pd > 0 && p <= str.length) { if (str[p] === '(') pd++; else if (str[p] === ')') pd--; p++; }
+          const argsStr = str.slice(n + 1, p - 1);
+          const args = splitTopLevel(argsStr, ',').map(s => s.trim());
+          const sizeExpr = args[0] || '0';
+          const fillExpr = args[1] !== undefined ? args[1] : defaultVal;
+          out += 'let ' + idName + ' = new Array(' + sizeExpr + ').fill(' + fillExpr + ')';
+          i = p - 1; continue;
+        } else if (str[n] === ';') { out += 'let ' + idName + ' = [];'; i = n; continue; }
+        else if (str[n] === '=') { out += 'let ' + idName + ' '; i = n - 1; continue; }
+        else { out += 'let ' + idName; i = m - 1; continue; }
+      }
+    }
+    out += str[i];
+  }
+  return out;
+}
+function wrapIntegerDivision(str) {
+  // FACTOR: a single atom (parenthesized group, identifier/array-index chain, or number).
+  // PRODUCT: one or more FACTORs chained with '*', so left-to-right evaluation order
+  // (e.g. "n * (n + 1) / 2") is preserved when we wrap the division.
+  const FACTOR = '(?:\\((?:[^()]|\\([^()]*\\))*\\)|[A-Za-z_]\\w*(?:\\.\\w+|\\[[^\\[\\]]*\\])*|-?\\d+(?:\\.\\d+)?)';
+  const PRODUCT = FACTOR + '(?:\\s*\\*\\s*' + FACTOR + ')*';
+  const re = new RegExp('(' + PRODUCT + ')\\s*/\\s*(' + PRODUCT + ')(?!=)', 'g');
+  let out = str, prev;
+  for (let pass = 0; pass < 3; pass++) {
+    prev = out;
+    out = out.replace(re, (m, a, b) => `__idiv(${a}, ${b})`);
+    if (out === prev) break;
+  }
+  return out;
+}
+function transpileCpp(body) {
+  let js = body;
+  js = bracesToArrayLiterals(js);
+  js = stripVectorTypes(js);
+  js = js.replace(/(\w+(?:\[[^\[\]]*\])?)\s*\/=\s*([^;]+);/g, '$1 = __idiv($1, $2);');
+  js = wrapIntegerDivision(js);
+  js = js.replace(/\b(long long|unsigned long long|long|unsigned int|unsigned|int|double|float|bool|char|string|auto|size_t)\s*&?\s*(?=[A-Za-z_])/g, 'let ');
+  js = js.replace(/\blet\s+let\b/g, 'let');
+  js = js.replace(/\((?:long long|unsigned long long|long|unsigned int|unsigned|int|double|float|char|size_t)\)\s*/g, '');
+  js = js.replace(/\bINT_MAX\b/g, '2147483647');
+  js = js.replace(/\bINT_MIN\b/g, '-2147483648');
+  js = js.replace(/\bLONG_MAX\b/g, 'Number.MAX_SAFE_INTEGER');
+  js = js.replace(/\bLONG_MIN\b/g, 'Number.MIN_SAFE_INTEGER');
+  js = js.replace(/\bnullptr\b/g, 'null');
+  js = js.replace(/\bNULL\b/g, 'null');
+  js = js.replace(/for\s*\(\s*let\s+([A-Za-z_]\w*)\s*:\s*/g, 'for (let $1 of ');
+  js = js.replace(/\.size\(\)/g, '.length');
+  js = js.replace(/\.length\(\)/g, '.length');
+  js = js.replace(/\.push_back\(/g, '.push(');
+  js = js.replace(/\.pop_back\(\)/g, '.pop()');
+  js = js.replace(/\.at\(([^)]*)\)/g, '[$1]');
+  js = js.replace(/\.front\(\)/g, '[0]');
+  js = js.replace(/(\w+)\.back\(\)/g, '$1[$1.length-1]');
+  js = js.replace(/(\w+)\.substr\(/g, '$1.substr(');
+  js = js.replace(/to_string\(/g, 'String(');
+  js = js.replace(/\bstoi\(/g, 'parseInt(');
+  js = js.replace(/\bstold\(|\bstod\(/g, 'parseFloat(');
+  js = js.replace(/\babs\(/g, 'Math.abs(');
+  js = js.replace(/\bmax\(/g, 'Math.max(');
+  js = js.replace(/\bmin\(/g, 'Math.min(');
+  js = js.replace(/\bpow\(/g, 'Math.pow(');
+  js = js.replace(/\bsqrt\(/g, 'Math.sqrt(');
+  js = js.replace(/(\w+)\.insert\(\s*\1\.begin\(\)\s*,\s*([^)]+)\)/g, '$1.unshift($2)');
+  js = js.replace(/(\w+)\.insert\(\s*\1\.begin\(\)\s*\+\s*([^,]+),\s*([^)]+)\)/g, '$1.splice($2,0,$3)');
+  js = js.replace(/(\w+)\.erase\(\s*\1\.begin\(\)\s*\+\s*([^)]+)\)/g, '$1.splice($2,1)');
+  js = js.replace(/(\w+)\.erase\(\s*\1\.begin\(\)\s*\)/g, '$1.shift()');
+  js = js.replace(/sort\(\s*(\w+)\.begin\(\)\s*,\s*\1\.end\(\)\s*\)/g, '$1.sort((a,b)=>a-b)');
+  js = js.replace(/reverse\(\s*(\w+)\.begin\(\)\s*,\s*\1\.end\(\)\s*\)/g, '$1 = __reverse($1)');
+  js = js.replace(/\bswap\(([^,]+),([^)]+)\)/g, (m, a, b) => `[${a.trim()},${b.trim()}]=[${b.trim()},${a.trim()}]`);
+  js = js.replace(/cout\s*((?:<<\s*[^;]+?)+);/g, (m, chain) => {
+    const parts = chain.split('<<').map(s => s.trim()).filter(s => s && s !== 'endl' && s !== '"\\n"');
+    return 'console.log(' + parts.join(',') + ');';
+  });
+  js = js.replace(/#include\s*<[^>]*>/g, '');
+  js = js.replace(/using\s+namespace\s+std\s*;/g, '');
+  const helper = 'function __idiv(a,b){ if(Number.isInteger(a)&&Number.isInteger(b)) return Math.trunc(a/b); return a/b; }\n' +
+    'function __reverse(x){ if (Array.isArray(x)) { x.reverse(); return x; } return String(x).split("").reverse().join(""); }\n';
+  return helper + js;
+}
+
+/* =========================================================================
+   PART 2 — Problem bank (18 problems) + verified expected outputs
+   ========================================================================= */
+const TESTDATA = {"twoSum":[{"args":[[2,7,11,15],9],"expected":[0,1]},{"args":[[3,2,4],6],"expected":[1,2]},{"args":[[3,3],6],"expected":[0,1]},{"args":[[1,2,3,4,5],9],"expected":[3,4]},{"args":[[0,4,3,0],0],"expected":[0,3]},{"args":[[-3,4,3,90],0],"expected":[0,2]},{"args":[[5,75,25],100],"expected":[1,2]}],"reverse":[{"args":[123],"expected":321},{"args":[-123],"expected":-321},{"args":[120],"expected":21},{"args":[0],"expected":0},{"args":[1534236469],"expected":0},{"args":[100],"expected":1},{"args":[-900],"expected":-9}],"isPalindrome":[{"args":[121],"expected":true},{"args":[-121],"expected":false},{"args":[10],"expected":false},{"args":[0],"expected":true},{"args":[12321],"expected":true},{"args":[12345],"expected":false},{"args":[1000021],"expected":false}],"isValid":[{"args":["()"],"expected":true},{"args":["()[]{}"],"expected":true},{"args":["(]"],"expected":false},{"args":["([)]"],"expected":false},{"args":["{[]}"],"expected":true},{"args":[""],"expected":true},{"args":["((("],"expected":false}],"maxSubArray":[{"args":[[-2,1,-3,4,-1,2,1,-5,4]],"expected":6},{"args":[[1]],"expected":1},{"args":[[5,4,-1,7,8]],"expected":23},{"args":[[-1]],"expected":-1},{"args":[[-2,-1]],"expected":-1},{"args":[[0,0,0]],"expected":0},{"args":[[-2,1,-3,4,-1,2,1,-5,4,10]],"expected":15}],"climbStairs":[{"args":[2],"expected":2},{"args":[3],"expected":3},{"args":[1],"expected":1},{"args":[4],"expected":5},{"args":[5],"expected":8},{"args":[6],"expected":13},{"args":[10],"expected":89}],"maxProfit":[{"args":[[7,1,5,3,6,4]],"expected":5},{"args":[[7,6,4,3,1]],"expected":0},{"args":[[1,2]],"expected":1},{"args":[[2,4,1]],"expected":2},{"args":[[3,3,3]],"expected":0},{"args":[[1,2,3,4,5]],"expected":4},{"args":[[10,1,9,2,8]],"expected":8}],"containsDuplicate":[{"args":[[1,2,3,1]],"expected":true},{"args":[[1,2,3,4]],"expected":false},{"args":[[1,1,1,3,3,4,3,2,4,2]],"expected":true},{"args":[[]],"expected":false},{"args":[[0]],"expected":false},{"args":[[5,5]],"expected":true},{"args":[[1,2,3,4,5,6,7,8,9,10]],"expected":false}],"singleNumber":[{"args":[[2,2,1]],"expected":1},{"args":[[4,1,2,1,2]],"expected":4},{"args":[[1]],"expected":1},{"args":[[1,1,2,2,3]],"expected":3},{"args":[[7,3,5,4,5,3,4]],"expected":7},{"args":[[-1,-1,-2]],"expected":-2},{"args":[[0,1,0]],"expected":1}],"moveZeroes":[{"args":[[0,1,0,3,12]],"expected":[1,3,12,0,0]},{"args":[[0,0,1]],"expected":[1,0,0]},{"args":[[1,2,3]],"expected":[1,2,3]},{"args":[[0,0,0]],"expected":[0,0,0]},{"args":[[4,0,5,0,1]],"expected":[4,5,1,0,0]},{"args":[[0]],"expected":[0]},{"args":[[1,0,2,0,3,0,4]],"expected":[1,2,3,4,0,0,0]}],"majorityElement":[{"args":[[3,2,3]],"expected":3},{"args":[[2,2,1,1,1,2,2]],"expected":2},{"args":[[1]],"expected":1},{"args":[[6,5,5]],"expected":5},{"args":[[1,1,1,2,2]],"expected":1},{"args":[[4,4,4,4,5,5,5]],"expected":4},{"args":[[9,3,9,9,7,9,9]],"expected":9}],"plusOne":[{"args":[[1,2,3]],"expected":[1,2,4]},{"args":[[4,3,2,1]],"expected":[4,3,2,2]},{"args":[[9]],"expected":[1,0]},{"args":[[9,9]],"expected":[1,0,0]},{"args":[[0]],"expected":[1]},{"args":[[1,9,9]],"expected":[2,0,0]},{"args":[[8,9,9,9]],"expected":[9,0,0,0]}],"fizzBuzz":[{"args":[3],"expected":["1","2","Fizz"]},{"args":[5],"expected":["1","2","Fizz","4","Buzz"]},{"args":[15],"expected":["1","2","Fizz","4","Buzz","Fizz","7","8","Fizz","Buzz","11","Fizz","13","14","FizzBuzz"]},{"args":[1],"expected":["1"]},{"args":[16],"expected":["1","2","Fizz","4","Buzz","Fizz","7","8","Fizz","Buzz","11","Fizz","13","14","FizzBuzz","16"]}],"searchInsert":[{"args":[[1,3,5,6],5],"expected":2},{"args":[[1,3,5,6],2],"expected":1},{"args":[[1,3,5,6],7],"expected":4},{"args":[[1,3,5,6],0],"expected":0},{"args":[[1],0],"expected":0},{"args":[[1,3],1],"expected":0},{"args":[[1,3],2],"expected":1}],"removeDuplicates":[{"args":[[1,1,2]],"k":2,"prefix":[1,2]},{"args":[[0,0,1,1,1,2,2,3,3,4]],"k":5,"prefix":[0,1,2,3,4]},{"args":[[1]],"k":1,"prefix":[1]},{"args":[[1,1,1,1]],"k":1,"prefix":[1]},{"args":[[1,2,3]],"k":3,"prefix":[1,2,3]},{"args":[[1,1,2,2,3,3]],"k":3,"prefix":[1,2,3]}],"lengthOfLastWord":[{"args":["Hello World"],"expected":5},{"args":["   fly me   to   the moon  "],"expected":4},{"args":["a"],"expected":1},{"args":["day"],"expected":3},{"args":["  hello world  "],"expected":5},{"args":["a b c"],"expected":1}],"missingNumber":[{"args":[[3,0,1]],"expected":2},{"args":[[0,1]],"expected":2},{"args":[[9,6,4,2,3,5,7,0,1]],"expected":8},{"args":[[0]],"expected":1},{"args":[[1]],"expected":0},{"args":[[0,1,2,3,5]],"expected":4}],"merge":[{"args":[[1,2,3,0,0,0],3,[2,5,6],3],"expected":[1,2,2,3,5,6]},{"args":[[1],1,[],0],"expected":[1]},{"args":[[0],0,[1],1],"expected":[1]},{"args":[[4,5,6,0,0,0],3,[1,2,3],3],"expected":[1,2,3,4,5,6]},{"args":[[1,2,4,5,6,0],5,[3],1],"expected":[1,2,3,4,5,6]},{"args":[[2,0],1,[1],1],"expected":[1,2]}]};
+
+function fmt(v){ return JSON.stringify(v); }
+
+const PROBLEMS = [
+  {
+    id:'twoSum', num:1, title:'Two Sum', difficulty:'Easy', funcName:'twoSum',
+    signature:'vector<int> twoSum(vector<int>& nums, int target)',
+    desc:`<p>Given an array of integers <code class="inline">nums</code> and an integer <code class="inline">target</code>, return the indices of the two numbers such that they add up to <code class="inline">target</code>.</p><p>You may assume that each input has <b>exactly one solution</b>, and you may not use the same element twice. Return the answer in any order — but the sample solutions below assume you scan left‑to‑right, so return the earlier index first.</p>`,
+    examples:[{input:'nums = [2,7,11,15], target = 9', output:'[0,1]', explain:'nums[0] + nums[1] == 9'},{input:'nums = [3,2,4], target = 6', output:'[1,2]'}],
+    constraints:['2 &le; nums.length &le; 10<sup>4</sup>','-10<sup>9</sup> &le; nums[i] &le; 10<sup>9</sup>','Exactly one valid answer exists.'],
+    starter:`class Solution {
+public:
+    vector<int> twoSum(vector<int>& nums, int target) {
+        // write your solution here
+
+    }
+};`,
+    visibleCount:2, void:false
+  },
+  {
+    id:'reverse', num:2, title:'Reverse Integer', difficulty:'Medium', funcName:'reverse',
+    signature:'int reverse(int x)',
+    desc:`<p>Given a signed 32‑bit integer <code class="inline">x</code>, return <code class="inline">x</code> with its digits reversed. If reversing causes the value to go outside the signed 32‑bit range [-2<sup>31</sup>, 2<sup>31</sup> - 1], return 0.</p>`,
+    examples:[{input:'x = 123', output:'321'},{input:'x = -123', output:'-321'},{input:'x = 120', output:'21'}],
+    constraints:['-2<sup>31</sup> &le; x &le; 2<sup>31</sup> - 1'],
+    starter:`class Solution {
+public:
+    int reverse(int x) {
+        // write your solution here
+
+    }
+};`,
+    visibleCount:2, void:false
+  },
+  {
+    id:'isPalindrome', num:3, title:'Palindrome Number', difficulty:'Easy', funcName:'isPalindrome',
+    signature:'bool isPalindrome(int x)',
+    desc:`<p>Given an integer <code class="inline">x</code>, return <code class="inline">true</code> if <code class="inline">x</code> is a palindrome, and <code class="inline">false</code> otherwise. Negative numbers are never palindromes.</p>`,
+    examples:[{input:'x = 121', output:'true'},{input:'x = -121', output:'false', explain:"reads '121-' backwards, not a palindrome"}],
+    constraints:['-2<sup>31</sup> &le; x &le; 2<sup>31</sup> - 1'],
+    starter:`class Solution {
+public:
+    bool isPalindrome(int x) {
+        // write your solution here
+
+    }
+};`,
+    visibleCount:2, void:false
+  },
+  {
+    id:'isValid', num:4, title:'Valid Parentheses', difficulty:'Easy', funcName:'isValid',
+    signature:'bool isValid(string s)',
+    desc:`<p>Given a string <code class="inline">s</code> containing just the characters <code class="inline">'(' ')' '{' '}' '[' ']'</code>, determine if the input string is valid. Brackets must close in the correct order and every opening bracket must have a matching closing bracket of the same type.</p>`,
+    examples:[{input:'s = "()"', output:'true'},{input:'s = "()[]{}"', output:'true'},{input:'s = "(]"', output:'false'}],
+    constraints:['1 &le; s.length &le; 10<sup>4</sup>', "s consists only of the characters '()[]{}'"],
+    starter:`class Solution {
+public:
+    bool isValid(string s) {
+        // write your solution here
+
+    }
+};`,
+    visibleCount:2, void:false
+  },
+  {
+    id:'maxSubArray', num:5, title:'Maximum Subarray', difficulty:'Medium', funcName:'maxSubArray',
+    signature:'int maxSubArray(vector<int>& nums)',
+    desc:`<p>Given an integer array <code class="inline">nums</code>, find the contiguous subarray (containing at least one number) which has the largest sum, and return that sum.</p>`,
+    examples:[{input:'nums = [-2,1,-3,4,-1,2,1,-5,4]', output:'6', explain:'[4,-1,2,1] has the largest sum = 6'},{input:'nums = [1]', output:'1'}],
+    constraints:['1 &le; nums.length &le; 10<sup>5</sup>','-10<sup>4</sup> &le; nums[i] &le; 10<sup>4</sup>'],
+    starter:`class Solution {
+public:
+    int maxSubArray(vector<int>& nums) {
+        // write your solution here
+
+    }
+};`,
+    visibleCount:2, void:false
+  },
+  {
+    id:'merge', num:6, title:'Merge Sorted Array', difficulty:'Easy', funcName:'merge',
+    signature:'void merge(vector<int>& nums1, int m, vector<int>& nums2, int n)',
+    desc:`<p>You are given two integer arrays <code class="inline">nums1</code> and <code class="inline">nums2</code>, sorted in non‑decreasing order, and two integers <code class="inline">m</code> and <code class="inline">n</code>, representing the number of elements in <code class="inline">nums1</code> and <code class="inline">nums2</code> respectively.</p><p><code class="inline">nums1</code> has a length of <code class="inline">m + n</code>, where the first <code class="inline">m</code> elements are the real values and the last <code class="inline">n</code> are set to 0 as placeholder space. Merge <code class="inline">nums2</code> into <code class="inline">nums1</code> <b>in place</b> so the result is sorted. This function returns <code class="inline">void</code> — modify <code class="inline">nums1</code> directly.</p>`,
+    examples:[{input:'nums1 = [1,2,3,0,0,0], m = 3, nums2 = [2,5,6], n = 3', output:'nums1 = [1,2,2,3,5,6]'},{input:'nums1 = [1], m = 1, nums2 = [], n = 0', output:'nums1 = [1]'}],
+    constraints:['nums1.length == m + n','nums1 and nums2 are sorted in non-decreasing order'],
+    starter:`class Solution {
+public:
+    void merge(vector<int>& nums1, int m, vector<int>& nums2, int n) {
+        // write your solution here (modify nums1 in place)
+
+    }
+};`,
+    visibleCount:2, void:true, mutateArg:0
+  },
+  {
+    id:'climbStairs', num:7, title:'Climbing Stairs', difficulty:'Easy', funcName:'climbStairs',
+    signature:'int climbStairs(int n)',
+    desc:`<p>You are climbing a staircase that takes <code class="inline">n</code> steps to reach the top. Each time you can climb either 1 or 2 steps. In how many distinct ways can you climb to the top?</p>`,
+    examples:[{input:'n = 2', output:'2', explain:'1+1 or 2'},{input:'n = 3', output:'3', explain:'1+1+1, 1+2, 2+1'}],
+    constraints:['1 &le; n &le; 45'],
+    starter:`class Solution {
+public:
+    int climbStairs(int n) {
+        // write your solution here
+
+    }
+};`,
+    visibleCount:2, void:false
+  },
+  {
+    id:'maxProfit', num:8, title:'Best Time to Buy and Sell Stock', difficulty:'Easy', funcName:'maxProfit',
+    signature:'int maxProfit(vector<int>& prices)',
+    desc:`<p>You are given an array <code class="inline">prices</code> where <code class="inline">prices[i]</code> is the price of a stock on day <code class="inline">i</code>. You want to maximize profit by choosing a single day to buy and a different later day to sell. Return the maximum profit, or 0 if no profit is possible.</p>`,
+    examples:[{input:'prices = [7,1,5,3,6,4]', output:'5', explain:'buy on day 2 (price 1), sell on day 5 (price 6)'},{input:'prices = [7,6,4,3,1]', output:'0'}],
+    constraints:['1 &le; prices.length &le; 10<sup>5</sup>','0 &le; prices[i] &le; 10<sup>4</sup>'],
+    starter:`class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        // write your solution here
+
+    }
+};`,
+    visibleCount:2, void:false
+  },
+  {
+    id:'containsDuplicate', num:9, title:'Contains Duplicate', difficulty:'Easy', funcName:'containsDuplicate',
+    signature:'bool containsDuplicate(vector<int>& nums)',
+    desc:`<p>Given an integer array <code class="inline">nums</code>, return <code class="inline">true</code> if any value appears at least twice, and <code class="inline">false</code> if every element is distinct.</p>`,
+    examples:[{input:'nums = [1,2,3,1]', output:'true'},{input:'nums = [1,2,3,4]', output:'false'}],
+    constraints:['1 &le; nums.length &le; 10<sup>5</sup>'],
+    starter:`class Solution {
+public:
+    bool containsDuplicate(vector<int>& nums) {
+        // write your solution here
+
+    }
+};`,
+    visibleCount:2, void:false
+  },
+  {
+    id:'singleNumber', num:10, title:'Single Number', difficulty:'Easy', funcName:'singleNumber',
+    signature:'int singleNumber(vector<int>& nums)',
+    desc:`<p>Given a non‑empty array of integers <code class="inline">nums</code>, every element appears twice except for one. Find that single one. Try to do it without using extra memory.</p>`,
+    examples:[{input:'nums = [2,2,1]', output:'1'},{input:'nums = [4,1,2,1,2]', output:'4'}],
+    constraints:['1 &le; nums.length &le; 3 * 10<sup>4</sup>'],
+    starter:`class Solution {
+public:
+    int singleNumber(vector<int>& nums) {
+        // write your solution here
+
+    }
+};`,
+    visibleCount:2, void:false
+  },
+  {
+    id:'moveZeroes', num:11, title:'Move Zeroes', difficulty:'Easy', funcName:'moveZeroes',
+    signature:'void moveZeroes(vector<int>& nums)',
+    desc:`<p>Given an integer array <code class="inline">nums</code>, move all <code class="inline">0</code>'s to the end of it while maintaining the relative order of the non‑zero elements. This must be done <b>in place</b> — the function returns <code class="inline">void</code>.</p>`,
+    examples:[{input:'nums = [0,1,0,3,12]', output:'nums = [1,3,12,0,0]'},{input:'nums = [0]', output:'nums = [0]'}],
+    constraints:['1 &le; nums.length &le; 10<sup>4</sup>'],
+    starter:`class Solution {
+public:
+    void moveZeroes(vector<int>& nums) {
+        // write your solution here (modify nums in place)
+
+    }
+};`,
+    visibleCount:2, void:true, mutateArg:0
+  },
+  {
+    id:'majorityElement', num:12, title:'Majority Element', difficulty:'Easy', funcName:'majorityElement',
+    signature:'int majorityElement(vector<int>& nums)',
+    desc:`<p>Given an array <code class="inline">nums</code> of size <code class="inline">n</code>, return the majority element — the element that appears more than <code class="inline">⌊n / 2⌋</code> times. You may assume it always exists.</p>`,
+    examples:[{input:'nums = [3,2,3]', output:'3'},{input:'nums = [2,2,1,1,1,2,2]', output:'2'}],
+    constraints:['1 &le; n &le; 5 * 10<sup>4</sup>'],
+    starter:`class Solution {
+public:
+    int majorityElement(vector<int>& nums) {
+        // write your solution here
+
+    }
+};`,
+    visibleCount:2, void:false
+  },
+  {
+    id:'plusOne', num:13, title:'Plus One', difficulty:'Easy', funcName:'plusOne',
+    signature:'vector<int> plusOne(vector<int>& digits)',
+    desc:`<p>You are given a large integer represented as an array of digits, most significant digit first. Increment the integer by one and return the resulting array of digits.</p>`,
+    examples:[{input:'digits = [1,2,3]', output:'[1,2,4]'},{input:'digits = [9,9]', output:'[1,0,0]'}],
+    constraints:['1 &le; digits.length &le; 100','0 &le; digits[i] &le; 9'],
+    starter:`class Solution {
+public:
+    vector<int> plusOne(vector<int>& digits) {
+        // write your solution here
+
+    }
+};`,
+    visibleCount:2, void:false
+  },
+  {
+    id:'fizzBuzz', num:14, title:'Fizz Buzz', difficulty:'Easy', funcName:'fizzBuzz',
+    signature:'vector<string> fizzBuzz(int n)',
+    desc:`<p>Given an integer <code class="inline">n</code>, return a string array <code class="inline">answer</code> (1‑indexed) where: <code class="inline">answer[i] == "FizzBuzz"</code> if <code class="inline">i</code> is divisible by 3 and 5, <code class="inline">"Fizz"</code> if divisible by 3, <code class="inline">"Buzz"</code> if divisible by 5, otherwise the string of the number itself.</p>`,
+    examples:[{input:'n = 3', output:'["1","2","Fizz"]'},{input:'n = 5', output:'["1","2","Fizz","4","Buzz"]'}],
+    constraints:['1 &le; n &le; 10<sup>4</sup>'],
+    starter:`class Solution {
+public:
+    vector<string> fizzBuzz(int n) {
+        // write your solution here
+
+    }
+};`,
+    visibleCount:2, void:false
+  },
+  {
+    id:'searchInsert', num:15, title:'Search Insert Position', difficulty:'Easy', funcName:'searchInsert',
+    signature:'int searchInsert(vector<int>& nums, int target)',
+    desc:`<p>Given a sorted array of distinct integers <code class="inline">nums</code> and a <code class="inline">target</code> value, return the index if the target is found. If not, return the index where it would be inserted in order. Aim for O(log n) — binary search.</p>`,
+    examples:[{input:'nums = [1,3,5,6], target = 5', output:'2'},{input:'nums = [1,3,5,6], target = 2', output:'1'}],
+    constraints:['1 &le; nums.length &le; 10<sup>4</sup>','nums is sorted with distinct values'],
+    starter:`class Solution {
+public:
+    int searchInsert(vector<int>& nums, int target) {
+        // write your solution here
+
+    }
+};`,
+    visibleCount:2, void:false
+  },
+  {
+    id:'removeDuplicates', num:16, title:'Remove Duplicates from Sorted Array', difficulty:'Easy', funcName:'removeDuplicates',
+    signature:'int removeDuplicates(vector<int>& nums)',
+    desc:`<p>Given an integer array <code class="inline">nums</code> sorted in non‑decreasing order, remove duplicates <b>in place</b> so each unique element appears only once. Return <code class="inline">k</code>, the number of unique elements — the first <code class="inline">k</code> elements of <code class="inline">nums</code> should hold the final result.</p>`,
+    examples:[{input:'nums = [1,1,2]', output:'2, nums = [1,2,_]'},{input:'nums = [0,0,1,1,1,2,2,3,3,4]', output:'5, nums = [0,1,2,3,4,_,_,_,_,_]'}],
+    constraints:['1 &le; nums.length &le; 3 * 10<sup>4</sup>','nums is sorted in non-decreasing order'],
+    starter:`class Solution {
+public:
+    int removeDuplicates(vector<int>& nums) {
+        // write your solution here (modify nums in place, return k)
+
+    }
+};`,
+    visibleCount:2, void:false, returnsK:true, mutateArg:0
+  },
+  {
+    id:'lengthOfLastWord', num:17, title:'Length of Last Word', difficulty:'Easy', funcName:'lengthOfLastWord',
+    signature:'int lengthOfLastWord(string s)',
+    desc:`<p>Given a string <code class="inline">s</code> of words and spaces, return the length of the <b>last</b> word — the last maximal substring of non‑space characters.</p>`,
+    examples:[{input:'s = "Hello World"', output:'5'},{input:'s = "   fly me   to   the moon  "', output:'4'}],
+    constraints:['1 &le; s.length &le; 10<sup>4</sup>', 's contains letters, digits and spaces', 's has at least one non-space character'],
+    starter:`class Solution {
+public:
+    int lengthOfLastWord(string s) {
+        // write your solution here
+
+    }
+};`,
+    visibleCount:2, void:false
+  },
+  {
+    id:'missingNumber', num:18, title:'Missing Number', difficulty:'Easy', funcName:'missingNumber',
+    signature:'int missingNumber(vector<int>& nums)',
+    desc:`<p>Given an array <code class="inline">nums</code> containing <code class="inline">n</code> distinct numbers taken from the range <code class="inline">[0, n]</code>, return the one number in that range that is missing from the array.</p>`,
+    examples:[{input:'nums = [3,0,1]', output:'2'},{input:'nums = [0,1]', output:'2'}],
+    constraints:['1 &le; n &le; 10<sup>4</sup>'],
+    starter:`class Solution {
+public:
+    int missingNumber(vector<int>& nums) {
+        // write your solution here
+
+    }
+};`,
+    visibleCount:2, void:false
+  }
+];
+
+/* attach verified test data to each problem */
+PROBLEMS.forEach(p => { p.tests = TESTDATA[p.id]; });
+
+/* =========================================================================
+   PART 3 — App state & rendering
+   ========================================================================= */
+const state = { activeId: PROBLEMS[0].id, solved: new Set(), codeCache: {} };
+
+function deepClone(v){ return v === undefined ? v : JSON.parse(JSON.stringify(v)); }
+function deepEqual(a,b){ return JSON.stringify(a) === JSON.stringify(b); }
+
+async function loadSolvedSet(){
+  try{
+    const res = await window.storage.get('cppjudge:solved', false);
+    if (res && res.value) { JSON.parse(res.value).forEach(id => state.solved.add(id)); }
+  }catch(e){ /* no data yet */ }
+  try{
+    const res = await window.storage.get('cppjudge:code-cache', false);
+    if (res && res.value) { state.codeCache = JSON.parse(res.value); }
+  }catch(e){ /* no data yet */ }
+}
+async function saveSolvedSet(){
+  try{ await window.storage.set('cppjudge:solved', JSON.stringify([...state.solved]), false); }catch(e){}
+}
+let saveCodeTimer = null;
+function saveCodeCacheDebounced(){
+  clearTimeout(saveCodeTimer);
+  saveCodeTimer = setTimeout(async () => {
+    try{ await window.storage.set('cppjudge:code-cache', JSON.stringify(state.codeCache), false); }catch(e){}
+  }, 500);
+}
+
+function iconCheck(){ return '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#3ddc8422" stroke="#3ddc84" stroke-width="1.6"/><path d="M8 12.5l2.5 2.5L16 9.5" stroke="#3ddc84" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'; }
+function iconDot(){ return '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3.5" fill="#3a4356"/></svg>'; }
+
+function renderSidebar(){
+  const list = document.getElementById('problem-list');
+  list.innerHTML = '';
+  PROBLEMS.forEach(p => {
+    const el = document.createElement('div');
+    el.className = 'prob-item' + (p.id === state.activeId ? ' active' : '');
+    el.innerHTML = `
+      <div class="prob-status">${state.solved.has(p.id) ? iconCheck() : iconDot()}</div>
+      <div class="prob-num">${p.num}.</div>
+      <div class="prob-title">${p.title}</div>
+      <div class="prob-diff diff-${p.difficulty}">${p.difficulty}</div>
+    `;
+    el.addEventListener('click', () => selectProblem(p.id));
+    list.appendChild(el);
+  });
+  updateProgress();
+}
+
+function updateProgress(){
+  const solvedCount = state.solved.size;
+  document.getElementById('solved-count').textContent = solvedCount + ' / ' + PROBLEMS.length;
+  document.getElementById('progress-fill').style.width = (solvedCount / PROBLEMS.length * 100) + '%';
+}
+
+function renderDescription(p){
+  const body = document.getElementById('desc-body');
+  const examplesHtml = p.examples.map((ex,i) => `
+    <div class="example-block">
+      <div><b>Example ${i+1}:</b></div>
+      <div><b>Input:</b> <span class="val">${ex.input}</span></div>
+      <div><b>Output:</b> <span class="val">${ex.output}</span></div>
+      ${ex.explain ? `<div><b>Explanation:</b> ${ex.explain}</div>` : ''}
+    </div>
+  `).join('');
+  const constraintsHtml = p.constraints.map(c => `<li>${c}</li>`).join('');
+  body.innerHTML = `
+    <h1>${p.num}. ${p.title}</h1>
+    <div class="desc-meta"><span class="prob-diff diff-${p.difficulty}">${p.difficulty}</span></div>
+    ${p.desc}
+    <h3>Examples</h3>
+    ${examplesHtml}
+    <h3>Constraints</h3>
+    <ul class="constraints">${constraintsHtml}</ul>
+    <h3>Function Signature</h3>
+    <div class="example-block">${p.signature};</div>
+    <div class="note-box">
+      <b>About this judge:</b> solutions run through a lightweight in‑browser C++‑subset interpreter, so keep to <code class="inline">int / double / bool / char / string / vector&lt;T&gt;</code>, loops, conditionals, recursion, and common STL calls (<code class="inline">push_back</code>, <code class="inline">size</code>, <code class="inline">sort</code>, <code class="inline">swap</code>, <code class="inline">substr</code>, <code class="inline">to_string</code>, <code class="inline">min/max/abs</code>, etc). <code class="inline">map</code>/<code class="inline">set</code>/<code class="inline">pair</code>/pointers aren't supported — none of these problems need them.
+      Keep the exact method name and signature shown above inside <code class="inline">class Solution</code>.
+    </div>
+  `;
+}
+
+function getStarterFor(p){
+  if (state.codeCache[p.id] !== undefined) return state.codeCache[p.id];
+  return p.starter;
+}
+
+function selectProblem(id){
+  state.activeId = id;
+  const p = PROBLEMS.find(x => x.id === id);
+  renderSidebar();
+  renderDescription(p);
+  document.getElementById('code-area').value = getStarterFor(p);
+  resetConsole();
+}
+
+function resetConsole(){
+  document.getElementById('console-body').innerHTML = '<div class="console-empty">// output will appear here after you Run or Submit</div>';
+  const chip = document.getElementById('verdict-chip');
+  chip.className = 'verdict-chip';
+  chip.textContent = '';
+}
+
+function currentProblem(){ return PROBLEMS.find(x => x.id === state.activeId); }
+
+/* ---------- Judge execution ---------- */
+function compileSolution(code, problem){
+  const { paramsStr, body } = extractFunctionBody(code, problem.funcName);
+  const pnames = paramNamesOf(paramsStr);
+  const jsBody = transpileCpp(body);
+  const fn = new Function(...pnames, jsBody);
+  return fn;
+}
+
+function runTests(problem, fn, tests){
+  return tests.map(tc => {
+    const clonedArgs = tc.args.map(a => deepClone(a));
+    let result, error = null;
+    try {
+      result = fn(...clonedArgs);
+    } catch (e) {
+      error = e.message || String(e);
+    }
+    let pass = false;
+    if (!error) {
+      if (problem.returnsK) {
+        const k = result;
+        const prefix = Array.isArray(clonedArgs[0]) ? clonedArgs[0].slice(0, k) : [];
+        pass = (k === tc.k) && deepEqual(prefix, tc.prefix);
+      } else if (problem.void) {
+        const mutated = clonedArgs[problem.mutateArg];
+        pass = deepEqual(mutated, tc.expected);
+      } else {
+        pass = deepEqual(result, tc.expected);
+      }
+    }
+    return { tc, result, error, pass };
+  });
+}
+
+function describeCase(problem, tc, r){
+  const argsDisplay = tc.args.map(a => fmt(a)).join(', ');
+  let expectedDisplay, gotDisplay;
+  if (problem.returnsK) {
+    expectedDisplay = `k = ${tc.k}, array = ${fmt(tc.prefix)}`;
+    gotDisplay = r.error ? '—' : `k = ${fmt(r.result)}`;
+  } else if (problem.void) {
+    expectedDisplay = fmt(tc.expected);
+    gotDisplay = '—';
+  } else {
+    expectedDisplay = fmt(tc.expected);
+    gotDisplay = r.error ? '—' : fmt(r.result);
+  }
+  return { argsDisplay, expectedDisplay, gotDisplay };
+}
+
+function renderResults(problem, results, isSubmit){
+  const consoleBody = document.getElementById('console-body');
+  const chip = document.getElementById('verdict-chip');
+  consoleBody.innerHTML = '';
+
+  const errored = results.find(r => r.error);
+  if (errored) {
+    const box = document.createElement('div');
+    box.className = 'err-box';
+    box.textContent = 'Runtime / Compile Error:\n' + errored.error;
+    consoleBody.appendChild(box);
+    chip.className = 'verdict-chip show verdict-RE';
+    chip.textContent = 'RUNTIME ERROR';
+    return false;
+  }
+
+  let passCount = 0;
+  results.forEach((r, i) => {
+    if (r.pass) passCount++;
+    const { argsDisplay, expectedDisplay, gotDisplay } = describeCase(problem, r.tc, r);
+    const line = document.createElement('div');
+    line.className = 'test-line ' + (r.pass ? 'pass' : 'fail');
+    line.innerHTML = `
+      <div class="icon">${r.pass ? iconCheck() : '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#ff6b6b22" stroke="#ff6b6b" stroke-width="1.6"/><path d="M9 9l6 6M15 9l-6 6" stroke="#ff6b6b" stroke-width="1.8" stroke-linecap="round"/></svg>'}</div>
+      <div class="tbody">
+        <div class="tlabel">Test ${i+1} ${r.pass ? '— Passed' : '— Failed'}</div>
+        ${(!r.pass) ? `<div class="tdetail"><span class="k">input:</span> <span class="v">${argsDisplay}</span></div>
+        <div class="tdetail"><span class="k">expected:</span> <span class="v">${expectedDisplay}</span></div>
+        <div class="tdetail"><span class="k">got:</span> <span class="v">${gotDisplay}</span></div>` : ''}
+      </div>
+    `;
+    consoleBody.appendChild(line);
+  });
+
+  const summary = document.createElement('div');
+  summary.className = 'console-summary';
+  summary.textContent = `${passCount} / ${results.length} test cases passed`;
+  consoleBody.appendChild(summary);
+
+  const allPass = passCount === results.length;
+  if (isSubmit) {
+    chip.className = 'verdict-chip show ' + (allPass ? 'verdict-AC' : 'verdict-WA');
+    chip.textContent = allPass ? 'ACCEPTED' : 'WRONG ANSWER';
+  } else {
+    chip.className = 'verdict-chip show ' + (allPass ? 'verdict-AC' : 'verdict-WA');
+    chip.textContent = allPass ? 'SAMPLES PASSED' : 'SAMPLE FAILED';
+  }
+  return allPass;
+}
+
+function handleRun(){
+  const problem = currentProblem();
+  const code = document.getElementById('code-area').value;
+  state.codeCache[problem.id] = code;
+  saveCodeCacheDebounced();
+  const consoleEl = document.getElementById('console');
+  consoleEl.classList.remove('collapsed');
+  try {
+    const fn = compileSolution(code, problem);
+    const sampleTests = problem.tests.slice(0, problem.visibleCount);
+    const results = runTests(problem, fn, sampleTests);
+    renderResults(problem, results, false);
+  } catch (e) {
+    const consoleBody = document.getElementById('console-body');
+    consoleBody.innerHTML = `<div class="err-box">Compile Error:\n${e.message || e}</div>`;
+    const chip = document.getElementById('verdict-chip');
+    chip.className = 'verdict-chip show verdict-RE';
+    chip.textContent = 'COMPILE ERROR';
+  }
+}
+
+function handleSubmit(){
+  const problem = currentProblem();
+  const code = document.getElementById('code-area').value;
+  state.codeCache[problem.id] = code;
+  saveCodeCacheDebounced();
+  const consoleEl = document.getElementById('console');
+  consoleEl.classList.remove('collapsed');
+  try {
+    const fn = compileSolution(code, problem);
+    const results = runTests(problem, fn, problem.tests);
+    const allPass = renderResults(problem, results, true);
+    if (allPass) {
+      state.solved.add(problem.id);
+      saveSolvedSet();
+      renderSidebar();
+    }
+  } catch (e) {
+    const consoleBody = document.getElementById('console-body');
+    consoleBody.innerHTML = `<div class="err-box">Compile Error:\n${e.message || e}</div>`;
+    const chip = document.getElementById('verdict-chip');
+    chip.className = 'verdict-chip show verdict-RE';
+    chip.textContent = 'COMPILE ERROR';
+  }
+}
+
+function handleReset(){
+  const problem = currentProblem();
+  document.getElementById('code-area').value = problem.starter;
+  delete state.codeCache[problem.id];
+  saveCodeCacheDebounced();
+  resetConsole();
+}
+
+/* ---------- wire up ---------- */
+document.getElementById('btn-run').addEventListener('click', handleRun);
+document.getElementById('btn-submit').addEventListener('click', handleSubmit);
+document.getElementById('btn-reset').addEventListener('click', handleReset);
+document.getElementById('console-toggle').addEventListener('click', () => {
+  document.getElementById('console').classList.toggle('collapsed');
+});
+document.getElementById('code-area').addEventListener('keydown', (e) => {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const ta = e.target;
+    const start = ta.selectionStart, end = ta.selectionEnd;
+    ta.value = ta.value.slice(0, start) + '    ' + ta.value.slice(end);
+    ta.selectionStart = ta.selectionEnd = start + 4;
+  }
+});
+document.getElementById('code-area').addEventListener('input', (e) => {
+  state.codeCache[state.activeId] = e.target.value;
+  saveCodeCacheDebounced();
+});
+
+async function init(){
+  await loadSolvedSet();
+  renderSidebar();
+  selectProblem(state.activeId);
+}
+init();
+</script>
+</body>
+</html>
